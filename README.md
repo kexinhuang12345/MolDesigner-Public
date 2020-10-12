@@ -1,6 +1,6 @@
 # MolDesigner \[NeurIPS 2020 Demo\]
 
-#### Live website: [deeppurpose.sublab.org](deeppurpose.sublab.org).
+#### Live website: [deeppurpose.sunlab.org](deeppurpose.sunlab.org).
 #### DeepPurpose GitHub repo: [link](https://github.com/kexinhuang12345/DeepPurpose)
 
 Authors: Kexin Huang, Tianfan Fu, Dawood Khan, Ali Abid, Ali Abdalla, Abubakar Abid, Lucas M. Glass, Marinka Zitnik, Cao Xiao, Jimeng Sun
