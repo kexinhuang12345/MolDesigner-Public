@@ -23,7 +23,8 @@ import os
 
 from DeepPurpose.utils import *
 from DeepPurpose.model_helper import Encoder_MultipleLayers, Embeddings    
-from DeepPurpose.models import transformer, CNN, CNN_RNN, MLP, MPNN
+#from DeepPurpose.models import transformer, CNN, CNN_RNN, MLP, MPNN
+from DeepPurpose.encoders import *
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -61,7 +62,7 @@ def model_initialize(**config):
 
 def model_pretrained(path_dir = None, model = None):
 	if model is not None:
-		path_dir = download_pretrained_model_property(model)
+		path_dir = download_pretrained_model(model)
 	config = load_dict(path_dir)
 	model = Property_Prediction(**config)
 	model.load_pretrained(path_dir + '/model.pt')    
@@ -157,7 +158,7 @@ class Property_Prediction:
 	def __init__(self, **config):
 		drug_encoding = config['drug_encoding']
 
-		if drug_encoding == 'Morgan' or drug_encoding=='Pubchem' or drug_encoding=='Daylight' or drug_encoding=='rdkit_2d_normalized':
+		if drug_encoding == 'Morgan' or drug_encoding=='Pubchem' or drug_encoding=='Daylight' or drug_encoding=='rdkit_2d_normalized' or drug_encoding == 'ESPF':
 			# Future TODO: support multiple encoding scheme for static input 
 			self.model_drug = MLP(config['input_dim_drug'], config['hidden_dim_drug'], config['mlp_hidden_dims_drug'])
 		elif drug_encoding == 'CNN':

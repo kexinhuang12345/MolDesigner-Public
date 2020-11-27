@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import wget
 from zipfile import ZipFile 
-from DeepPurpose.utils import convert_y_unit
+from DeepPurpose.utils import *
 import json
 import os 
 
@@ -42,6 +42,70 @@ def read_file_training_dataset_bioassay(path):
 
 def read_file_training_dataset_drug_target_pairs(path):
 	# a line in the file is SMILES Target_seq score    
+	try:
+		file = open(path, "r")
+	except:
+		print('Path Not Found, please double check!')
+	X_drug = []
+	X_target = []
+	y = []
+	for aline in file:
+		values = aline.split()
+		X_drug.append(values[0])
+		X_target.append(values[1])
+		y.append(float(values[2]))
+	file.close()
+	return np.array(X_drug), np.array(X_target), np.array(y)
+
+def read_file_training_dataset_drug_drug_pairs(path):
+	# a line in the file is SMILES SMILES score    
+	try:
+		file = open(path, "r")
+	except:
+		print('Path Not Found, please double check!')
+	X_drug = []
+	X_target = []
+	y = []
+	for aline in file:
+		values = aline.split()
+		X_drug.append(values[0])
+		X_target.append(values[1])
+		y.append(float(values[2]))
+	file.close()
+	return np.array(X_drug), np.array(X_target), np.array(y)
+
+def read_file_protein_function(path):
+	# a line in the file is protein names and target_seq 
+	try:
+		file = open(path, "r")
+	except:
+		print('Path Not Found, please double check!')    
+	X_drug = []
+	X_drug_names = []
+	for aline in file:
+		values = aline.split()
+		X_drug.append(values[1])
+		X_drug_names.append(values[0])
+	file.close()
+	return np.array(X_drug), np.array(X_drug_names)
+
+def read_file_compound_property(path):
+	# a line in the file is drug names and smiles 
+	try:
+		file = open(path, "r")
+	except:
+		print('Path Not Found, please double check!')    
+	X_drug = []
+	X_drug_names = []
+	for aline in file:
+		values = aline.split()
+		X_drug.append(values[1])
+		X_drug_names.append(values[0])
+	file.close()
+	return np.array(X_drug), np.array(X_drug_names)
+
+def read_file_training_dataset_protein_protein_pairs(path):
+	# a line in the file is target_seq target_seq score    
 	try:
 		file = open(path, "r")
 	except:
@@ -329,21 +393,52 @@ def load_AID1706_SARS_CoV_3CL(path = './data', binary = True, threshold = 15, ba
 	print('Done!')
 	return np.array(X_drug), target, np.array(y)
 
+def load_HIV(path = './data'):
+	download_unzip('HIV', path, 'hiv.csv')
+
+	df = pd.read_csv(os.path.join(path,'hiv.csv'))
+	df = df.iloc[df['smiles'].drop_duplicates(keep = False).index.values]
+
+	df = df[df["HIV_active"].notnull()].reset_index(drop = True)
+	y = df["HIV_active"].values
+	drugs = df.smiles.values
+	drugs_idx = np.array(list(range(len(drugs))))
+
+	return drugs, y, drugs_idx	
+
+def load_AqSolDB(path = './data'):
+
+	if os.path.exists(os.path.join(path,'curated-solubility-dataset.csv')):
+		print('Dataset already downloaded in the local system...', flush = True, file = sys.stderr)
+	else:
+		wget.download('https://dataverse.harvard.edu/api/access/datafile/3407241?format=original&gbrecs=true', path)
+
+	df = pd.read_csv(os.path.join(path,'curated-solubility-dataset.csv'))
+	df = df.iloc[df['SMILES'].drop_duplicates(keep = False).index.values]
+	
+	y = df["Solubility"].values
+	drugs = df.SMILES.values
+	drugs_idx = df.Name.values
+
+	return drugs, y, drugs_idx
+
 def load_broad_repurposing_hub(path = './data'):
-	url = 'https://deeppurpose.s3.amazonaws.com/broad.csv'
+	url = 'https://dataverse.harvard.edu/api/access/datafile/4159648'
 	if not os.path.exists(path):
 	    os.makedirs(path)
-	saved_path_data = wget.download(url, path)
-	df = pd.read_csv(saved_path_data)
+	download_path = os.path.join(path, 'broad.tab')
+	download_url(url, download_path)
+	df = pd.read_csv(download_path, sep = '\t')
 	df = df.fillna('UNK')
 	return df.smiles.values, df.title.values, df.cid.values.astype(str)
 
 def load_antiviral_drugs(path = './data', no_cid = False):
-	url = 'https://deeppurpose.s3.amazonaws.com/antiviral_drugs.csv'
+	url = 'https://dataverse.harvard.edu/api/access/datafile/4159652'
 	if not os.path.exists(path):
-		os.mkdir(path)
-	saved_path_data = wget.download(url, path)
-	df = pd.read_csv(saved_path_data)
+	    os.makedirs(path)
+	download_path = os.path.join(path, 'antiviral_drugs.tab')
+	download_url(url, download_path)
+	df = pd.read_csv(download_path, sep = '\t')
 	if no_cid:
 		return df.SMILES.values, df[' Name'].values
 	else:
@@ -360,11 +455,12 @@ def load_IC50_Not_Pretrained(path = './data', n=500):
 
 def load_IC50_1000_Samples(path = './data', n=100): 
 	print('Downloading...')    
-	url = 'https://deeppurpose.s3.amazonaws.com/IC50_samples.csv'
+	url = 'https://dataverse.harvard.edu/api/access/datafile/4159681'
 	if not os.path.exists(path):
 	    os.makedirs(path)
-	saved_path_data = wget.download(url, path)
-	df = pd.read_csv(saved_path_data).sample(n = n, replace = False).reset_index(drop = True)
+	download_path = os.path.join(path, 'IC50_samples.csv')
+	download_url(url, download_path)
+	df = pd.read_csv(download_path).sample(n = n, replace = False).reset_index(drop = True)
 	return df['Target Sequence'].values, df['SMILES'].values
 
 def load_SARS_CoV_Protease_3CL():
